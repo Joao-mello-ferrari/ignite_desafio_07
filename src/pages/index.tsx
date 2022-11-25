@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { Button, Box } from '@chakra-ui/react';
 import { useMemo } from 'react';
 import { useInfiniteQuery } from 'react-query';
@@ -19,32 +18,35 @@ export default function Home(): JSX.Element {
     hasNextPage,
   } = useInfiniteQuery(
     'images',
-    async () => {
-      const r = await api.get('http://localhost:3000/api/images');
-      return r.data.data;
+    async ({ pageParam = undefined }) => {
+      const url = `/api/images?after=${pageParam}`;
+      const response = await api.get(url);
+      return response.data;
+    },
+    {
+      getNextPageParam: response => response.after || undefined,
+      staleTime: Infinity,
     }
-    // TODO AXIOS REQUEST WITH PARAM
-    // ,
-    // TODO GET AND RETURN NEXT PAGE PARAM
   );
 
-  console.log(data, hasNextPage);
+  const formattedData = useMemo(() => {
+    if (!data) return [];
 
-  // async function a(): Promise<void> {
-  //   const r = await api.get('http://localhost:3000/api/images');
-  //   console.log(r);
-  // }
+    const flattenedList = [];
+    data.pages.forEach(page => {
+      flattenedList.push(...page.data);
+    });
 
-  // a();
+    return flattenedList;
+  }, [data]);
 
-  // const formattedData = useMemo(() => {
-  //   return data;
-  //   // TODO FORMAT AND FLAT DATA ARRAY
-  // }, [data]);
+  if (isLoading) {
+    return <Loading />;
+  }
 
-  // TODO RENDER LOADING SCREEN
-
-  // TODO RENDER ERROR SCREEN
+  if (isError) {
+    return <Error />;
+  }
 
   return (
     <>
@@ -52,14 +54,24 @@ export default function Home(): JSX.Element {
 
       <Box maxW={1120} px={20} mx="auto" my={20}>
         {/* <CardList cards={formattedData} /> */}
-        <Image
-          src="https://i.ibb.co/zW3fdZn/Eu-com-filtro-leve.jpg"
-          alt="a1"
-          width="100"
-          height="100"
-          // fill="fixed"
-        />
-        {/* TODO RENDER LOAD MORE BUTTON IF DATA HAS NEXT PAGE */}
+        {formattedData.map(a => (
+          <div key={a.id}>a.title</div>
+        ))}
+        {hasNextPage && (
+          <Button
+            type="button"
+            onClick={() => fetchNextPage()}
+            isLoading={isFetchingNextPage}
+            loadingText="Carregando"
+            _loading={{
+              flexDirection: 'row-reverse',
+              fontSize: '16',
+              gap: '2',
+            }}
+          >
+            Carregar mais
+          </Button>
+        )}
       </Box>
     </>
   );
