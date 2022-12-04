@@ -18,10 +18,14 @@ export default function Home(): JSX.Element {
     hasNextPage,
   } = useInfiniteQuery(
     'images',
-    async ({ pageParam = undefined }) => {
-      const url = `/api/images?after=${pageParam}`;
-      const response = await api.get(url);
-      return response.data;
+    async ({ pageParam = null }) => {
+      const res = await api.get(`/api/images`, {
+        params: {
+          after: pageParam,
+        },
+      });
+    
+      return res.data;
     },
     {
       getNextPageParam: response => response.after || undefined,
@@ -53,7 +57,7 @@ export default function Home(): JSX.Element {
       <Header />
 
       <Box maxW={1120} px={20} mx="auto" my={20}>
-        {/* <CardList cards={formattedData} /> */}
+        <CardList cards={formattedData} />
         {formattedData.map(a => (
           <div key={a.id}>a.title</div>
         ))}
