@@ -8,6 +8,17 @@ import { api } from '../services/api';
 import { Loading } from '../components/Loading';
 import { Error } from '../components/Error';
 
+interface AxiosResponse {
+  after: string | null;
+  data: {
+    title: string;
+    description: string;
+    url: string;
+    ts: number;
+    id: string;
+  }[];
+}
+
 export default function Home(): JSX.Element {
   const {
     data,
@@ -18,18 +29,15 @@ export default function Home(): JSX.Element {
     hasNextPage,
   } = useInfiniteQuery(
     'images',
-    async ({ pageParam = null }) => {
-      const res = await api.get(`/api/images`, {
-        params: {
-          after: pageParam,
-        },
+    async ({ pageParam = undefined }) => {
+      const url = '/api/images';
+      const response = await api.get<AxiosResponse>(url, {
+        params: { after: pageParam },
       });
-    
-      return res.data;
+      return response.data;
     },
     {
       getNextPageParam: response => response.after || undefined,
-      staleTime: Infinity,
     }
   );
 
@@ -58,20 +66,12 @@ export default function Home(): JSX.Element {
 
       <Box maxW={1120} px={20} mx="auto" my={20}>
         <CardList cards={formattedData} />
-        {formattedData.map(a => (
-          <div key={a.id}>a.title</div>
-        ))}
         {hasNextPage && (
           <Button
             type="button"
             onClick={() => fetchNextPage()}
             isLoading={isFetchingNextPage}
-            loadingText="Carregando"
-            _loading={{
-              flexDirection: 'row-reverse',
-              fontSize: '16',
-              gap: '2',
-            }}
+            mt={8}
           >
             Carregar mais
           </Button>
